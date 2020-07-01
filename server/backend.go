@@ -49,7 +49,7 @@ func Server() {
 }
 
 func readLoop(conn net.Conn) {
-	buf := make([]byte, 1000000) // 创建2048大小的缓冲区，用于read
+	buf := make([]byte, 2000000) // 创建2048大小的缓冲区，用于read
 	var (
 		start  time.Time
 		end    time.Time
@@ -105,7 +105,7 @@ func readLoop(conn net.Conn) {
 					}
 					end = time.Now()
 					fmt.Println("计算用时:", end.Sub(start))
-					fmt.Println(len(model.Result))
+					fmt.Println(model.Result)
 					httpPost("http://localhost:" + env.ResPort + "/api/finished")
 					return
 				}
@@ -114,6 +114,7 @@ func readLoop(conn net.Conn) {
 				_, ok := model.ErrTid[v]
 				if !ok {
 					model.ErrTid[v] = ""
+					v = v + "\r"
 					for _, c := range connPool {
 						c.Write([]byte(v))
 					}

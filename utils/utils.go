@@ -57,7 +57,7 @@ func readData(resp *http.Response) {
 			model.EndSign = 1
 			end = time.Now()
 			fmt.Println("读取结束", end.Sub(start), n, err)
-			// resp.Body.Close()
+			resp.Body.Close()
 			break
 		}
 		list = strings.Split(string(buffer[:n]), "\n")

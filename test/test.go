@@ -8,9 +8,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"time"
-
-	"github.com/valyala/fasthttp"
 )
 
 // var buffer []byte
@@ -145,20 +142,20 @@ func main() {
 // 	fmt.Println(list)
 // }
 
-func get(url string, i int, size int) string {
-	req := fasthttp.AcquireRequest()
-	req.Header.SetMethod("GET")
-	s := fmt.Sprintf("bytes=%d-%d", i*size, (i+1)*size)
-	req.Header.Set("Range", s)
-	req.Header.Set("Accept-Charset", "utf-8")
-	req.Header.Set("Accept-Encoding", "gzip")
-	req.SetRequestURI(url)
-	resp := fasthttp.AcquireResponse()
-	if err := fasthttp.DoTimeout(req, resp, time.Second*30); err != nil {
-		log.Println(err)
-	}
-	return string(resp.Body())
-}
+// func get(url string, i int, size int) string {
+// 	req := fasthttp.AcquireRequest()
+// 	req.Header.SetMethod("GET")
+// 	s := fmt.Sprintf("bytes=%d-%d", i*size, (i+1)*size)
+// 	req.Header.Set("Range", s)
+// 	req.Header.Set("Accept-Charset", "utf-8")
+// 	req.Header.Set("Accept-Encoding", "gzip")
+// 	req.SetRequestURI(url)
+// 	resp := fasthttp.AcquireResponse()
+// 	if err := fasthttp.DoTimeout(req, resp, time.Second*30); err != nil {
+// 		log.Println(err)
+// 	}
+// 	return string(resp.Body())
+// }
 
 func getRes(url string, i int, size int) string {
 	req, err := http.NewRequest("GET", url, nil)
