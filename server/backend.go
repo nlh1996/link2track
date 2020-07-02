@@ -102,6 +102,7 @@ func handle() {
 	end := time.Now()
 	log.Println("计算用时：", end.Sub(start))
 	fmt.Println(len(model.Result))
+	fmt.Println(len(model.ErrTid))
 	httpPost("http://localhost:" + env.ResPort + "/api/finished")
 }
 
