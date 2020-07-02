@@ -22,6 +22,7 @@ var (
 	index  int
 	start  time.Time
 	end    time.Time
+	fspan  model.Span
 )
 
 func init() {
@@ -82,9 +83,7 @@ func streamHandle() {
 		if model.EndSign == 1 {
 			for {
 				span := <-model.Stream
-				model.Mux.Lock()
 				_, ok := model.ErrTid[span.Tid]
-				model.Mux.Unlock()
 				if ok {
 					socket.Write(span.Data)
 				}
@@ -139,12 +138,11 @@ func readData(resp *http.Response) {
 
 func filter(list []string) {
 	var res = false
-	span := model.Span{}
 	for _, v := range list {
 		arr := strings.Split(v, "|")
-		span.Tid = arr[0]
-		span.Data = v + "\n"
-		model.Stream <- span
+		fspan.Tid = arr[0]
+		fspan.Data = v + "\n"
+		model.Stream <- fspan
 		if len(arr) < 9 {
 			continue
 		}
