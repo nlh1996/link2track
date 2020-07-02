@@ -83,7 +83,9 @@ func streamHandle() {
 		if model.EndSign == 1 {
 			for {
 				span := <-model.Stream
+				model.Mux.Lock()
 				_, ok := model.ErrTid[span.Tid]
+				model.Mux.Unlock()
 				if ok {
 					socket.Write(span.Data)
 				}
