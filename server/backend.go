@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bytes"
 	"cloud/env"
 	"cloud/model"
 	"cloud/utils"
@@ -15,8 +14,6 @@ import (
 	"sort"
 	"strings"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 var (
@@ -61,11 +58,8 @@ func read() {
 		case str := <-ch:
 			i++
 			res += str
-			if i == 2 {
-				start := time.Now()
+			if i == len(connPool) {
 				handle()
-				end := time.Now()
-				log.Println("计算用时：", end.Sub(start))
 				break
 			}
 		}
@@ -73,6 +67,7 @@ func read() {
 }
 
 func handle() {
+	start := time.Now()
 	var (
 		span model.Span
 		arr  []string
@@ -104,6 +99,8 @@ func handle() {
 		// md5加密
 		model.Result[k] = utils.Md5(str)
 	}
+	end := time.Now()
+	log.Println("计算用时：", end.Sub(start))
 	fmt.Println(model.Result)
 	httpPost("http://localhost:" + env.ResPort + "/api/finished")
 }
@@ -147,13 +144,12 @@ func readLoop(conn net.Conn) {
 
 func httpPost(URL string) {
 	DataURLVal := url.Values{}
-	for k, v := range model.Result {
-		DataURLVal.Add(k, v)
-	}
-	data := "result=" + DataURLVal.Encode()
+	mjson, _ := json.Marshal(model.Result)
+	mString := string(mjson)
+	DataURLVal.Add("result", mString)
 	resp, err := http.Post(URL,
 		"application/x-www-form-urlencoded",
-		strings.NewReader(data))
+		strings.NewReader(DataURLVal.Encode()))
 	if err != nil {
 		fmt.Println(err)
 		return

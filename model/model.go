@@ -11,6 +11,8 @@ var ErrTid map[string]string
 // Stream .
 var Stream chan Span
 
+var ByteStream chan []byte
+
 // Mux 互斥锁
 var Mux sync.Mutex
 
@@ -32,6 +34,7 @@ func Init() {
 	Result = make(map[string]string, 10000)
 	ErrTid = make(map[string]string)
 	Stream = make(chan Span, 31000)
+	ByteStream = make(chan []byte, 1024)
 	SpanMap = make(map[string]Spans, 10000)
 }
 

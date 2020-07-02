@@ -4,40 +4,76 @@ import (
 	"cloud/env"
 	"cloud/model"
 	"cloud/socket"
-	"cloud/utils"
+	"fmt"
 	"log"
+	"net/http"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
+
+var (
+	buffer []byte
+	list   []string
+	bytes  []byte
+	length int
+	temp   string
+	index  int
+	start  time.Time
+	end    time.Time
+)
+
+func init() {
+	buffer = make([]byte, env.BufferSize)
+}
 
 // Ready .
 func Ready(c *gin.Context) {
 	c.String(200, "ok")
 }
 
-var index int
 // SetParameter .
 func SetParameter(c *gin.Context) {
-	index ++
+	index++
 	env.ResPort = c.Query("port")
 	log.Println(env.ResPort)
 	if env.Port != "8002" && index == 1 {
-		go start()
+		go startGet()
 	}
 	c.String(200, "ok")
 }
 
-func start() {
-	if env.Port == "8000" {
-		env.URL = "http://localhost:" + env.ResPort + "/trace1.data"
-	}
-	if env.Port == "8001" {
-		env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
-	}
+func startGet() {
+	// if env.Port == "8000" {
+	// 	env.URL = "http://localhost:" + env.ResPort + "/trace1.data"
+	// }
+	// if env.Port == "8001" {
+	// 	env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
+	// }
 
+	go byteStreamHandle()
 	go streamHandle()
 
-	utils.GetRes(env.URL)
+	start = time.Now()
+	getRes(env.URL)
+}
+
+// func init() {
+// 	bytes = make([]byte, env.BufferSize)
+// }
+
+func byteStreamHandle() {
+	for {
+		select {
+		case bytes = <-model.ByteStream:
+			list = strings.Split(string(bytes), "\n")
+			length = len(list)
+			temp = list[length-1]
+			list[0] = temp + list[0]
+			filter(list[:length-1])
+		}
+	}
 }
 
 func streamHandle() {
@@ -65,6 +101,65 @@ func streamHandle() {
 			if ok {
 				socket.Write(span.Data)
 			}
+		}
+	}
+}
+
+// getRes .
+func getRes(url string) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Fatalf("Invalid url for downloading: %s, error: %v", url, err)
+	}
+	req.Header.Set("Accept-Charset", "utf-8")
+	req.Header.Set("Accept-Encoding", "gzip")
+	resp, err := env.Client.Do(req)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	readData(resp)
+}
+
+func readData(resp *http.Response) {
+	for {
+		n, err := resp.Body.Read(buffer)
+		if n == 0 || err != nil {
+			model.EndSign = 1
+			end = time.Now()
+			fmt.Println("读取结束", end.Sub(start), n, err)
+			resp.Body.Close()
+			break
+		}
+		model.ByteStream <- buffer[:n]
+	}
+}
+
+func filter(list []string) {
+	var res = false
+	span := model.Span{}
+	for _, v := range list {
+		arr := strings.Split(v, "|")
+		span.Tid = arr[0]
+		span.Data = v + "\n"
+		model.Stream <- span
+		if len(arr) < 9 {
+			continue
+		}
+		res = strings.Contains(arr[8], "error=1")
+		if res {
+			socket.Write(arr[0])
+			continue
+		}
+		res = strings.Contains(arr[8], "code=4")
+		if res {
+			socket.Write(arr[0])
+			continue
+		}
+		res = strings.Contains(arr[8], "code=5")
+		if res {
+			socket.Write(arr[0])
 		}
 	}
 }
