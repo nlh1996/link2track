@@ -16,8 +16,8 @@ var (
 
 func init() {
 	Client = &http.Client{
-		Timeout: time.Second * 10,
+		Timeout: time.Second * 30,
 	}
-	BufferSize = 15000000
-	StreamSize = 5001000
+	BufferSize = 1000
+	StreamSize = 500100
 }

@@ -37,7 +37,7 @@ func Init() {
 	Result = make(map[string]string, 10000)
 	ErrTid = make(map[string]string, 10000)
 	Stream = make(chan Span, env.StreamSize)
-	ByteStream = make(chan []byte, 2048)
+	ByteStream = make(chan []byte, 1000)
 	SpanMap = make(map[string]Spans, 10000)
 }
 

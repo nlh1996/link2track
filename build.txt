@@ -2,4 +2,4 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -i -tags netgo -v -ldflags="-s -w
 docker run -itd  --net host -e "SERVER_PORT=8000" --name "client1" 
 docker run -itd  --net host -e "SERVER_PORT=8001" --name "client2" 
 docker run -itd  --net host -e "SERVER_PORT=8002" --name "backend" 
-docker run --rm --net host -e "SERVER_PORT=8081" --name scoring -d 60044cb5a150
+docker run --net host -e "SERVER_PORT=8081" --name s -d 60044cb5a150

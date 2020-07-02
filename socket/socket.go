@@ -36,6 +36,7 @@ func readLoop() {
 			fmt.Println("err = ", err)
 			return
 		}
+
 		list := strings.Split(string(buf[:n]), "\r")
 		for _, v := range list {
 			model.Mux.Lock()

@@ -75,7 +75,8 @@ func handle() {
 	list := strings.Split(res, "\n")
 	for _, item := range list {
 		arr = strings.Split(item, "|")
-		if len(arr) < 9 {
+		if len(arr) < 2 {
+			fmt.Println(item)
 			continue
 		}
 		span.Tid = arr[0]
@@ -86,6 +87,9 @@ func handle() {
 
 	// 排序
 	for k, s := range model.SpanMap {
+		if k == "" {
+			fmt.Println(k,s)
+		}
 		sort.Sort(s)
 		model.SpanMap[k] = s
 	}
@@ -96,6 +100,7 @@ func handle() {
 		for _, item := range s {
 			str = str + item.Data
 		}
+
 		// md5加密
 		model.Result[k] = utils.Md5(str)
 	}
@@ -122,8 +127,9 @@ func readLoop(conn net.Conn) {
 		for _, v := range list {
 			if v == "end" {
 				ch <- result
+				break
 			}
-			if len(v) < 20 {
+			if len(v) < 20 && v != "" {
 				model.Mux.Lock()
 				_, ok := model.ErrTid[v]
 				model.Mux.Unlock()

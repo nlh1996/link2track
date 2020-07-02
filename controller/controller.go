@@ -38,7 +38,6 @@ func Ready(c *gin.Context) {
 func SetParameter(c *gin.Context) {
 	index++
 	env.ResPort = c.Query("port")
-	log.Println(env.ResPort)
 	if env.Port != "8002" && index == 1 {
 		go startGet()
 	}
@@ -46,12 +45,12 @@ func SetParameter(c *gin.Context) {
 }
 
 func startGet() {
-	if env.Port == "8000" {
-		env.URL = "http://localhost:" + env.ResPort + "/trace1.data"
-	}
-	if env.Port == "8001" {
-		env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
-	}
+	// if env.Port == "8000" {
+	// 	env.URL = "http://localhost:" + env.ResPort + "/trace1.data"
+	// }
+	// if env.Port == "8001" {
+	// 	env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
+	// }
 
 	go byteStreamHandle()
 	go streamHandle()
@@ -60,14 +59,15 @@ func startGet() {
 	getRes(env.URL)
 }
 
-// func init() {
-// 	bytes = make([]byte, env.BufferSize)
-// }
-
 func byteStreamHandle() {
 	for {
 		select {
 		case bytes = <-model.ByteStream:
+			if string(bytes) == "end" {
+				model.EndSign = 1
+				fmt.Println(count)
+				return
+			}
 			list = strings.Split(string(bytes), "\n")
 			length = len(list)
 			temp = list[length-1]
@@ -76,6 +76,10 @@ func byteStreamHandle() {
 		}
 	}
 }
+
+// 1514698
+// 1514908
+// 1512069
 
 func streamHandle() {
 	size := env.StreamSize - 1000
@@ -128,15 +132,18 @@ func readData(resp *http.Response) {
 	for {
 		n, err := resp.Body.Read(buffer)
 		if n == 0 || err != nil {
-			model.EndSign = 1
+			model.ByteStream <- []byte("end")
 			end = time.Now()
 			fmt.Println("读取结束", end.Sub(start), n, err)
-			resp.Body.Close()
-			break
+			//resp.Body.Close()
+			return
 		}
+		// fmt.Println(n)
 		model.ByteStream <- buffer[:n]
 	}
 }
+
+var count int
 
 func filter(list []string) {
 	var res = false
@@ -145,22 +152,18 @@ func filter(list []string) {
 		fspan.Tid = arr[0]
 		fspan.Data = v + "\n"
 		model.Stream <- fspan
-		if len(arr) < 9 {
-			continue
-		}
-		res = strings.Contains(arr[8], "error=1")
+		l := len(arr) - 1
+		res = strings.Contains(arr[l], "error=1")
 		if res {
 			socket.Write(arr[0])
 			continue
 		}
-		res = strings.Contains(arr[8], "code=4")
+		res = strings.Contains(arr[l], "code")
 		if res {
-			socket.Write(arr[0])
-			continue
-		}
-		res = strings.Contains(arr[8], "code=5")
-		if res {
-			socket.Write(arr[0])
+			res = strings.Contains(arr[l], "code=200")
+			if !res {
+				socket.Write(arr[0])
+			}
 		}
 	}
 }
