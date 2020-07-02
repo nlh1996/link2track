@@ -19,5 +19,5 @@ func init() {
 		Timeout: time.Second * 10,
 	}
 	BufferSize = 15000000
-	StreamSize = 10001000
+	StreamSize = 5001000
 }
