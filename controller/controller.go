@@ -45,12 +45,12 @@ func SetParameter(c *gin.Context) {
 }
 
 func startGet() {
-	// if env.Port == "8000" {
-	// 	env.URL = "http://localhost:" + env.ResPort + "/trace1.data"
-	// }
-	// if env.Port == "8001" {
-	// 	env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
-	// }
+	if env.Port == "8000" {
+		env.URL = "http://localhost:" + env.ResPort + "/trace1.data"
+	}
+	if env.Port == "8001" {
+		env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
+	}
 
 	go byteStreamHandle()
 	go streamHandle()
@@ -77,6 +77,7 @@ func byteStreamHandle() {
 }
 
 func streamHandle() {
+	size := env.StreamSize - 1000
 	for {
 		if model.EndSign == 1 {
 			for {
@@ -93,7 +94,7 @@ func streamHandle() {
 				}
 			}
 		}
-		if len(model.Stream) > 30000 {
+		if len(model.Stream) > size {
 			span := <-model.Stream
 			model.Mux.Lock()
 			_, ok := model.ErrTid[span.Tid]

@@ -11,11 +11,13 @@ var (
 	Client     *http.Client
 	URL        string
 	BufferSize int
+	StreamSize int
 )
 
 func init() {
 	Client = &http.Client{
 		Timeout: time.Second * 10,
 	}
-	BufferSize = 30000000
+	BufferSize = 15000000
+	StreamSize = 51000
 }

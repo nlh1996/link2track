@@ -1,6 +1,9 @@
 package model
 
-import "sync"
+import (
+	"cloud/env"
+	"sync"
+)
 
 // SpanMap .
 var SpanMap map[string]Spans
@@ -33,7 +36,7 @@ var EndSign int
 func Init() {
 	Result = make(map[string]string, 10000)
 	ErrTid = make(map[string]string)
-	Stream = make(chan Span, 31000)
+	Stream = make(chan Span, env.StreamSize)
 	ByteStream = make(chan []byte, 1024)
 	SpanMap = make(map[string]Spans, 10000)
 }
@@ -51,7 +54,7 @@ func (s Spans) Less(i, j int) bool {
 	return s[i].Time < s[j].Time
 }
 
-// Swap 
+// Swap
 func (s Spans) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
