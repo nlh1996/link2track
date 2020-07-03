@@ -4,8 +4,7 @@ import (
 	"cloud/env"
 	"cloud/model"
 	"cloud/router"
-	"cloud/server"
-	"cloud/socket"
+	"cloud/ws"
 	"os"
 	"runtime"
 )
@@ -36,17 +35,14 @@ func main() {
 	initData()
 	model.Init()
 
-	// backend
 	if env.Port == "8002" {
-		// 开启http服务
-		go router.Init()
-		// 开启socket服务端
-		go server.Server(":8003")
-		server.Server(":8004")
+		router.Init()
 	}
 
-	// 开启socket客户端
-	socket.Init()
+	//连接websocket服务
+	ws.Dial()
+	// ws.WriteTid("hello")
+	// ws.WriteSpan("日日日")
 	// 开启http服务
 	go router.Init()
 

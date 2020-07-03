@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"pojing/model"
 
 	"log"
 
@@ -19,25 +18,15 @@ type Connection struct {
 	outChan   chan []byte
 	ctx       context.Context
 	cancel    context.CancelFunc
-	router    *Router
 	connected bool
 }
 
-var (
-	users *model.UserMap
-)
-
-func init() {
-	users = model.GetUserMgr()
-}
-
 // NewConnection .
-func NewConnection(wsConn *websocket.Conn, r *Router, id string) (*Connection, error) {
+func NewConnection(wsConn *websocket.Conn, id string) (*Connection, error) {
 	conn := &Connection{
 		wsConnect: wsConn,
 		inChan:    make(chan []byte, 1024),
 		outChan:   make(chan []byte, 1024),
-		router:    r,
 		ID:        id,
 		connected: true,
 	}
@@ -58,13 +47,7 @@ func (conn *Connection) Start() (data []byte, err error) {
 	for {
 		select {
 		case data = <-conn.inChan:
-			req := &Request{
-				conn: conn,
-				ID:  string(data[:4]),
-				ByteData: data[4:],
-			}
-			// 请求跟路由绑定，并发处理请求
-			go conn.router.DoMsgHandle(req)
+			fmt.Println(string(data))
 
 		case <-conn.ctx.Done():
 			return

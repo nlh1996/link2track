@@ -28,23 +28,18 @@ var (
 			return true
 		},
 	}
-	router *ws.Router
 )
-
-func init() {
-	router = ws.NewRouter()
-	// router.AddRouter(100, scene.SayHello)
-}
 
 // Handler .
 func Handler(c *gin.Context) {
+	id := c.Query("id")
 	// 升级get请求为webSocket长连接
 	connection, err := upGrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	conn, err := ws.NewConnection(connection, router)
+	conn, err := ws.NewConnection(connection, id)
 	if err != nil {
 		connection.WriteMessage(websocket.TextMessage, []byte(err.Error()))
 		return

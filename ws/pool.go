@@ -1,7 +1,6 @@
 package ws
 
 import (
-	"pojing/env"
 	"sync"
 )
 
@@ -17,7 +16,7 @@ var instance *ConnPool
 func GetConnPool() *ConnPool {
 	if instance == nil {
 		instance = &ConnPool{}
-		instance.pool = make(map[string]*Connection, env.GlobalData.Conn.PoolConnNum)
+		instance.pool = make(map[string]*Connection, 10)
 	}
 	return instance
 }
