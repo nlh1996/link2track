@@ -91,10 +91,10 @@ func streamHandle() {
 				_, ok := model.ErrTid[span.Tid]
 				model.Mux.Unlock()
 				if ok {
-					socket.Write(span.Data)
+					socket.Write1(span.Data)
 				}
 				if len(model.Stream) == 0 {
-					socket.Write("end")
+					socket.Write1("end")
 					return
 				}
 			}
@@ -105,7 +105,7 @@ func streamHandle() {
 			_, ok := model.ErrTid[span.Tid]
 			model.Mux.Unlock()
 			if ok {
-				socket.Write(span.Data)
+				socket.Write1(span.Data)
 			}
 		}
 	}
@@ -155,14 +155,14 @@ func filter(list []string) {
 		l := len(arr) - 1
 		res = strings.Contains(arr[l], "error=1")
 		if res {
-			socket.Write(arr[0])
+			socket.Write2(arr[0])
 			continue
 		}
 		res = strings.Contains(arr[l], "code")
 		if res {
 			res = strings.Contains(arr[l], "code=200")
 			if !res {
-				socket.Write(arr[0])
+				socket.Write2(arr[0])
 			}
 		}
 	}

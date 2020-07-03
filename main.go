@@ -25,7 +25,8 @@ func initData() {
 	}
 	if env.Port == "" {
 		// runtime.GOMAXPROCS(4)
-		env.URL = "http://192.168.0.4/trace1.data"
+		// env.URL = "http://192.168.0.4/trace1.data"
+		env.URL = "http://www.yinghuo2018.com/download/trace1.data"
 		env.Port = "8000"
 	}
 }
@@ -40,7 +41,8 @@ func main() {
 		// 开启http服务
 		go router.Init()
 		// 开启socket服务端
-		server.Server()
+		go server.Server(":8003")
+		server.Server(":8004")
 	}
 
 	// 开启socket客户端

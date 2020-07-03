@@ -23,12 +23,9 @@ var (
 )
 
 // Server .
-func Server() {
-	connPool = make(map[string]net.Conn)
-	ch = make(chan string)
-	go read()
+func Server(port string) {
 	// 创建监听
-	listener, err := net.Listen("tcp", ":8003")
+	listener, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Println("listen err:", err)
 		return
@@ -45,9 +42,47 @@ func Server() {
 		}
 		addr := conn.RemoteAddr().String()
 		log.Println(addr, "connected.")
-		connPool[addr] = conn
-		//处理用户请求, 新建一个协程
-		go readLoop(conn)
+		if port == ":8003" {
+			ch = make(chan string)
+			go read()
+			//处理用户请求, 新建一个协程
+			go readLoop(conn)
+		} else {
+			connPool = make(map[string]net.Conn)
+			connPool[addr] = conn
+			go readTid(conn)
+		}
+	}
+}
+
+func readTid(conn net.Conn) {
+	buf := make([]byte, 2048)
+	for {
+		//读取用户数据
+		n, err := conn.Read(buf)
+		if err != nil {
+			fmt.Println("err = ", err)
+			delete(connPool, conn.RemoteAddr().String())
+			return
+		}
+
+		list := strings.Split(string(buf[:n]), "\r")
+		for _, v := range list {
+			if len(v) < 20 && v != "" {
+				model.Mux.Lock()
+				_, ok := model.ErrTid[v]
+				model.Mux.Unlock()
+				if !ok {
+					model.Mux.Lock()
+					model.ErrTid[v] = ""
+					model.Mux.Unlock()
+					v = v + "\r"
+					for _, c := range connPool {
+						c.Write([]byte(v))
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -88,7 +123,7 @@ func handle() {
 	// 排序
 	for k, s := range model.SpanMap {
 		if k == "" {
-			fmt.Println(k,s)
+			fmt.Println(k, s)
 		}
 		sort.Sort(s)
 		model.SpanMap[k] = s
@@ -112,7 +147,7 @@ func handle() {
 }
 
 func readLoop(conn net.Conn) {
-	buf := make([]byte, 2000000) // 创建2048大小的缓冲区，用于read
+	buf := make([]byte, 4096) // 创建2048大小的缓冲区，用于read
 	var result string
 	for {
 		//读取用户数据
@@ -129,22 +164,7 @@ func readLoop(conn net.Conn) {
 				ch <- result
 				break
 			}
-			if len(v) < 20 && v != "" {
-				model.Mux.Lock()
-				_, ok := model.ErrTid[v]
-				model.Mux.Unlock()
-				if !ok {
-					model.Mux.Lock()
-					model.ErrTid[v] = ""
-					model.Mux.Unlock()
-					v = v + "\r"
-					for _, c := range connPool {
-						c.Write([]byte(v))
-					}
-				}
-			} else {
-				result += v
-			}
+			result += v
 		}
 	}
 }
