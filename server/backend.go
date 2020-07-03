@@ -107,24 +107,27 @@ func handle() {
 		span model.Span
 		arr  []string
 	)
-	list := strings.Split(res, "\n")
+	list := strings.Split(res, "\r")
 	for _, item := range list {
 		arr = strings.Split(item, "|")
 		if len(arr) < 2 {
 			fmt.Println(item)
 			continue
 		}
+		if arr[0] == "" {
+			fmt.Println(item)
+		}
 		span.Tid = arr[0]
 		span.Time = arr[1]
-		span.Data = item + "\n"
+		span.Data = item
 		model.SpanMap[span.Tid] = append(model.SpanMap[span.Tid], span)
 	}
 
 	// 排序
 	for k, s := range model.SpanMap {
-		if k == "" {
-			fmt.Println(k, s)
-		}
+		// if k == "" {
+		// 	fmt.Println(k, s)
+		// }
 		sort.Sort(s)
 		model.SpanMap[k] = s
 	}
@@ -148,8 +151,13 @@ func handle() {
 
 func readLoop(conn net.Conn) {
 	buf := make([]byte, 4096) // 创建2048大小的缓冲区，用于read
-	var result string
+	var (
+		result string
+		//list   []string
+		index  int
+	)
 	for {
+		index ++
 		//读取用户数据
 		n, err := conn.Read(buf)
 		if err != nil {
@@ -157,14 +165,26 @@ func readLoop(conn net.Conn) {
 			return
 		}
 
-		list := strings.Split(string(buf[:n]), "\r")
-		for _, v := range list {
-			if v == "end" {
-				ch <- result
-				break
-			}
-			result += v
+		if string(buf[:n]) == "end\r" {
+			ch <- result
+			break
 		}
+		
+		result += string(buf[:n])
+		if index == 100 {
+			fmt.Println(result)
+		}
+		// list = strings.Split(string(buf[:n]), "\r")
+		// if index < 40 {
+		// 	fmt.Println(string(buf[:n]))
+		// }
+		// for _, v := range list {
+		// 	if v == "end" {
+		// 		ch <- result
+		// 		break
+		// 	}
+		// 	result += v
+		// }
 	}
 }
 

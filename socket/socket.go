@@ -51,7 +51,7 @@ func readLoop() {
 	}
 }
 
-// Write1 .
+// Write1 错误span传输.
 func Write1(data string) {
 	if conn1 == nil {
 		return
@@ -65,7 +65,7 @@ func Write1(data string) {
 	}
 }
 
-// Write2 .
+// Write2 错误tid传输.
 func Write2(data string) {
 	if conn2 == nil {
 		return
