@@ -77,10 +77,6 @@ func byteStreamHandle() {
 	}
 }
 
-// 1514698
-// 1514908
-// 1512069
-
 func streamHandle() {
 	size := env.StreamSize - 1000
 	for {

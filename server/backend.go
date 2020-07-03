@@ -154,7 +154,6 @@ func readLoop(conn net.Conn) {
 		n, err := conn.Read(buf)
 		if err != nil {
 			fmt.Println("err = ", err)
-			delete(connPool, conn.RemoteAddr().String())
 			return
 		}
 

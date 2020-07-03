@@ -28,7 +28,8 @@ func main() {
 	// fmt.Println(end.Sub(start))
 	model.Init()
 	// 开启socket服务端
-	server.Server()
+	go server.Server(":8003")
+	server.Server(":8004")
 }
 
 // func getRes(url string, i int, size int) string {

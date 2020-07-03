@@ -36,7 +36,7 @@ func readLoop() {
 	// 接收服务端数据
 	buf := make([]byte, 1024)
 	for {
-		n, err := conn1.Read(buf)
+		n, err := conn2.Read(buf)
 		if err != nil {
 			fmt.Println("err = ", err)
 			return
@@ -57,6 +57,7 @@ func Write1(data string) {
 		return
 	}
 	data = data + "\r"
+
 	// 发送数据
 	_, err := conn1.Write([]byte(data))
 	if err != nil {
