@@ -2,6 +2,7 @@ package main
 
 import (
 	"cloud/env"
+	"cloud/model"
 	"cloud/router"
 	"fmt"
 	"io/ioutil"
@@ -25,7 +26,7 @@ func main() {
 	// getRes(url, 0, 1000000)
 	// end = time.Now()
 	// fmt.Println(end.Sub(start))
-	// model.Init()
+	model.Init()
 	// // 开启socket服务端
 	// go server.Server(":8003")
 	// server.Server(":8004")

@@ -41,8 +41,6 @@ func main() {
 
 	//连接websocket服务
 	ws.Dial()
-	// ws.WriteTid("hello")
-	// ws.WriteSpan("日日日")
 	// 开启http服务
 	go router.Init()
 

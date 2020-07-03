@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"cloud/model"
 	"context"
 	"errors"
 	"fmt"
@@ -31,9 +32,10 @@ func NewConnection(wsConn *websocket.Conn, id string) (*Connection, error) {
 		connected: true,
 	}
 	conn.ctx, conn.cancel = context.WithCancel(context.Background())
-	p := GetConnPool()
-	p.Set(conn)
-
+	if id != "2" {
+		p := GetConnPool()
+		p.Set(conn)
+	}
 	return conn, nil
 }
 
@@ -47,7 +49,9 @@ func (conn *Connection) Start() (data []byte, err error) {
 	for {
 		select {
 		case data = <-conn.inChan:
-			fmt.Println(string(data))
+			if conn.ID != "2" {
+				fmt.Println(string(data))
+			}
 
 		case <-conn.ctx.Done():
 			return
@@ -88,11 +92,19 @@ func (conn *Connection) readLoop() {
 		if _, data, err = conn.wsConnect.ReadMessage(); err != nil {
 			goto ERR
 		}
-		//阻塞在这里，等待inChan有空闲位置
-		select {
-		case conn.inChan <- data:
-		case <-conn.ctx.Done(): // closeChan 感知 conn断开
-			goto ERR
+		d := string(data)
+		if conn.ID != "2" {
+			model.Mux.Lock()
+			_, ok := model.ErrTid[d]
+			model.Mux.Unlock()
+			if !ok {
+				model.Mux.Lock()
+				model.ErrTid[d] = ""
+				model.Mux.Unlock()
+				for _, c := range GetConnPool().Pool {
+					c.Send(data)
+				}
+			}
 		}
 	}
 

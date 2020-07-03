@@ -1,6 +1,8 @@
 package ws
 
 import (
+	"cloud/env"
+	"cloud/model"
 	"fmt"
 	"log"
 
@@ -15,20 +17,16 @@ var (
 
 // Dial .
 func Dial() {
-	url1 := "http://localhost:8002/"
-	//url2 := "http://localhost:8002/?id=2"
-	origin := "ws://localhost:8002/"
+	url1 := "ws://localhost:8002/?id=" + env.Port
+	url2 := "ws://localhost:8002/?id=2"
+	origin := "http://localhost:8002/"
 	log.Println("客户端等待服务器连接中...")
-	// for ws1 == nil {
-	ws, err := websocket.Dial(url1, "", origin)
-	if err != nil {
-		log.Panicln(err)
+	for ws1 == nil {
+		ws1, _ = websocket.Dial(url1, "", origin)
 	}
-	ws.Write([]byte("111"))
-	// }
-	// for ws2 == nil {
-	// 	ws2, _ = websocket.Dial(url2, "", origin)
-	// }
+	for ws2 == nil {
+		ws2, _ = websocket.Dial(url2, "", origin)
+	}
 	log.Println("成功连接...")
 	go read()
 }
@@ -55,7 +53,11 @@ func read() {
 		m, err := ws1.Read(data)
 		if err != nil {
 			log.Println(err)
+			return
 		}
-		fmt.Printf("Receive: %s\n", data[:m])
+		fmt.Println(string(data[:m]))
+		model.Mux.Lock()
+		model.ErrTid[string(data[:m])] = ""
+		model.Mux.Unlock()
 	}
 }

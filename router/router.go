@@ -5,6 +5,7 @@ import (
 	"cloud/env"
 	"cloud/middleware"
 	"cloud/ws"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -33,6 +34,7 @@ var (
 // Handler .
 func Handler(c *gin.Context) {
 	id := c.Query("id")
+	fmt.Println(id)
 	// 升级get请求为webSocket长连接
 	connection, err := upGrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
