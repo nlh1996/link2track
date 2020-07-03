@@ -60,19 +60,24 @@ func startGet() {
 }
 
 func byteStreamHandle() {
+	var res string
+	var i int
 	for {
 		select {
 		case bytes = <-model.ByteStream:
+			i++
 			if string(bytes) == "end" {
 				model.EndSign = 1
-				fmt.Println(count)
 				return
 			}
-			list = strings.Split(string(bytes), "\n")
-			length = len(list)
-			temp = list[length-1]
-			list[0] = temp + list[0]
-			filter(list[:length-1])
+			res += string(bytes)
+			if i > 300 {
+				i = 0
+				list = strings.Split(res, "\n")
+				filter(list)
+				res = ""
+			}
+			// list[0] = temp + list[0]
 		}
 	}
 }
@@ -134,12 +139,9 @@ func readData(resp *http.Response) {
 			//resp.Body.Close()
 			return
 		}
-		// fmt.Println(n)
 		model.ByteStream <- buffer[:n]
 	}
 }
-
-var count int
 
 func filter(list []string) {
 	var res = false

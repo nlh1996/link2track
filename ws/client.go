@@ -3,7 +3,6 @@ package ws
 import (
 	"cloud/env"
 	"cloud/model"
-	"fmt"
 	"log"
 
 	"golang.org/x/net/websocket"
@@ -55,7 +54,6 @@ func read() {
 			log.Println(err)
 			return
 		}
-		fmt.Println(string(data[:m]))
 		model.Mux.Lock()
 		model.ErrTid[string(data[:m])] = ""
 		model.Mux.Unlock()
