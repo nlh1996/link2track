@@ -2,9 +2,13 @@ package ws
 
 import (
 	"cloud/model"
+	"cloud/utils"
 	"context"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
+	"time"
 
 	"log"
 
@@ -40,23 +44,11 @@ func NewConnection(wsConn *websocket.Conn, id string) (*Connection, error) {
 }
 
 // Start .
-func (conn *Connection) Start() (data []byte, err error) {
+func (conn *Connection) Start() {
 	// 启动读协程
 	go conn.readLoop()
 	// 启动写协程
 	go conn.writeLoop()
-
-	for {
-		select {
-		case data = <-conn.inChan:
-			if conn.ID != "2" {
-				fmt.Println(string(data))
-			}
-
-		case <-conn.ctx.Done():
-			return
-		}
-	}
 }
 
 // Close .
@@ -82,17 +74,43 @@ func (conn *Connection) Send(msgBytes []byte) (err error) {
 	return
 }
 
+var ch chan int
+
+func init() {
+	ch = make(chan int)
+	go do()
+}
+
+func do() {
+	var i int
+	for {
+		select {
+		case <-ch:
+			i++
+			if i == len(GetConnPool().Pool) {
+				handle()
+				break
+			}
+		}
+	}
+}
+
 // 内部实现
 func (conn *Connection) readLoop() {
 	var (
 		data []byte
 		err  error
+		arr  []string
+		span model.Span
 	)
 	for {
 		if _, data, err = conn.wsConnect.ReadMessage(); err != nil {
 			goto ERR
 		}
 		d := string(data)
+		if d == "end" {
+			ch <- 0
+		}
 		if conn.ID != "2" {
 			model.Mux.Lock()
 			_, ok := model.ErrTid[d]
@@ -105,6 +123,19 @@ func (conn *Connection) readLoop() {
 					c.Send(data)
 				}
 			}
+		} else {
+			arr = strings.Split(d, "|")
+			if len(arr) < 2 {
+				fmt.Println(d)
+				continue
+			}
+			if arr[0] == "" {
+				fmt.Println(d)
+			}
+			span.Tid = arr[0]
+			span.Time = arr[1]
+			span.Data = d + "\n"
+			model.SpanMap[span.Tid] = append(model.SpanMap[span.Tid], span)
 		}
 	}
 
@@ -130,4 +161,27 @@ func (conn *Connection) writeLoop() {
 
 ERR:
 	conn.Close()
+}
+
+func handle() {
+	start := time.Now()
+	// 排序
+	for k, s := range model.SpanMap {
+		sort.Sort(s)
+		model.SpanMap[k] = s
+	}
+	// 聚合
+	for k, s := range model.SpanMap {
+		var str string
+		for _, item := range s {
+			str = str + item.Data
+		}
+		// md5加密
+		model.Result[k] = utils.Md5(str)
+	}
+	end := time.Now()
+	log.Println("计算用时：", end.Sub(start))
+	fmt.Println(len(model.Result))
+	fmt.Println(len(model.ErrTid))
+	utils.HTTPPost()
 }

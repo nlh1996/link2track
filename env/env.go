@@ -2,6 +2,7 @@ package env
 
 import (
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -18,6 +19,10 @@ func init() {
 	Client = &http.Client{
 		Timeout: time.Second * 10,
 	}
-	BufferSize = 1024
+	if os.Getenv("SERVER_PORT") == "" {
+		BufferSize = 1024
+	} else {
+		BufferSize = 10000000
+	}
 	StreamSize = 500100
 }

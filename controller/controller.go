@@ -40,6 +40,8 @@ func SetParameter(c *gin.Context) {
 	env.ResPort = c.Query("port")
 	if env.Port != "8002" && index == 1 {
 		go startGet()
+	}else {
+		env.URL = "http://localhost:" + env.ResPort + "/api/finished"
 	}
 	c.String(200, "ok")
 }
@@ -148,7 +150,7 @@ func filter(list []string) {
 	for _, v := range list {
 		arr := strings.Split(v, "|")
 		fspan.Tid = arr[0]
-		fspan.Data = v + "\n"
+		fspan.Data = v
 		model.Stream <- fspan
 		l := len(arr) - 1
 		res = strings.Contains(arr[l], "error=1")
