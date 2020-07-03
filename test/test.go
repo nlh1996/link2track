@@ -1,9 +1,8 @@
 package main
 
 import (
+	"bytes"
 	"cloud/env"
-	"cloud/model"
-	"cloud/router"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -13,26 +12,9 @@ import (
 // var buffer []byte
 
 func main() {
-	// env.Client = &http.Client{
-	// 	Timeout: time.Second * 60,
-	// }
-	// url := "http://www.yinghuo2018.com/download/trace1.data"
-	// start := time.Now()
-	// get(url, 0, 1000000)
-	// end := time.Now()
-	// fmt.Println(end.Sub(start))
-
-	// start = time.Now()
-	// getRes(url, 0, 1000000)
-	// end = time.Now()
-	// fmt.Println(end.Sub(start))
-	model.Init()
-	// // 开启socket服务端
-	// go server.Server(":8003")
-	// server.Server(":8004")
-	// // 开启http服务
-	env.Port = "8002"
-	router.Init()
+	bs := []byte("hello|wor|ld")
+	i := bytes.Index(bs, []byte("|"))
+	fmt.Println(string(bs[:i]))
 }
 
 // func getRes(url string, i int, size int) string {

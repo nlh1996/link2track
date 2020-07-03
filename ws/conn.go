@@ -64,8 +64,6 @@ func (conn *Connection) Close() {
 
 // Send .
 func (conn *Connection) Send(msgBytes []byte) (err error) {
-	fmt.Println("SEND->", string(msgBytes))
-
 	select {
 	case conn.outChan <- msgBytes:
 	case <-conn.ctx.Done():
@@ -107,7 +105,7 @@ func (conn *Connection) readLoop() {
 		if _, data, err = conn.wsConnect.ReadMessage(); err != nil {
 			goto ERR
 		}
-		d := string(data)
+		d := utils.Bytes2str(data)
 		if d == "end" {
 			ch <- 0
 		}
@@ -135,7 +133,9 @@ func (conn *Connection) readLoop() {
 			span.Tid = arr[0]
 			span.Time = arr[1]
 			span.Data = d + "\n"
+			model.Mux.Lock()
 			model.SpanMap[span.Tid] = append(model.SpanMap[span.Tid], span)
+			model.Mux.Unlock()
 		}
 	}
 
@@ -181,7 +181,7 @@ func handle() {
 	}
 	end := time.Now()
 	log.Println("计算用时：", end.Sub(start))
-	fmt.Println(len(model.Result))
+	fmt.Println(model.Result)
 	fmt.Println(len(model.ErrTid))
 	utils.HTTPPost()
 }

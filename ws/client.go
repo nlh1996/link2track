@@ -2,7 +2,6 @@ package ws
 
 import (
 	"cloud/env"
-	"cloud/model"
 	"log"
 
 	"golang.org/x/net/websocket"
@@ -31,16 +30,16 @@ func Dial() {
 }
 
 // WriteTid .
-func WriteTid(data string) {
-	_, err = ws1.Write([]byte(data))
+func WriteTid(data []byte) {
+	_, err = ws1.Write(data)
 	if err != nil {
 		log.Println(err)
 	}
 }
 
 // WriteSpan .
-func WriteSpan(data string) {
-	_, err = ws2.Write([]byte(data))
+func WriteSpan(data []byte) {
+	_, err = ws2.Write(data)
 	if err != nil {
 		log.Println(err)
 	}
@@ -49,13 +48,13 @@ func WriteSpan(data string) {
 func read() {
 	var data = make([]byte, 512)
 	for {
-		m, err := ws1.Read(data)
+		_, err := ws1.Read(data)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		model.Mux.Lock()
-		model.ErrTid[string(data[:m])] = ""
-		model.Mux.Unlock()
+		// model.Mux.Lock()
+		// model.ErrTid[utils.Bytes2str(data[:m])] = ""
+		// model.Mux.Unlock()
 	}
 }
