@@ -30,8 +30,8 @@ type Connection struct {
 func NewConnection(wsConn *websocket.Conn, id string) (*Connection, error) {
 	conn := &Connection{
 		wsConnect: wsConn,
-		inChan:    make(chan []byte, 1024),
-		outChan:   make(chan []byte, 1024),
+		inChan:    make(chan []byte, 10000),
+		outChan:   make(chan []byte, 10000),
 		ID:        id,
 		connected: true,
 	}
@@ -51,7 +51,7 @@ func (conn *Connection) Start() {
 	go conn.writeLoop()
 
 	var span model.Span
-	
+
 	for {
 		select {
 		case data := <-conn.inChan:
