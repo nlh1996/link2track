@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"bytes"
 	"cloud/env"
 	"cloud/model"
 	"cloud/utils"
@@ -9,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -16,20 +16,24 @@ import (
 
 var (
 	buffer []byte
-	list   [][]byte
+	list   []string
 	bs     []byte
-	start  time.Time
-	end    time.Time
 	fspan  model.Span
 	index  int
-	sep    = []byte("\n")
-	sep2   = []byte("|")
-	sep3   = []byte("error=1")
-	sep4   = []byte("code")
-	sep5   = []byte("code=200")
-	b2s    = utils.Bytes2str
-	s2b    = utils.Str2bytes
-	endCh  chan bool
+	start  time.Time
+	sep    = "\n"
+	sep2   = "|"
+	sep3   = "error=1"
+	sep4   = "code"
+	sep5   = "code=200"
+	// sep    = []byte("\n")
+	// sep2   = []byte("|")
+	// sep3   = []byte("error=1")
+	// sep4   = []byte("code")
+	// sep5   = []byte("code=200")
+	b2s   = utils.Bytes2str
+	s2b   = utils.Str2bytes
+	endCh chan bool
 )
 
 func init() {
@@ -55,25 +59,26 @@ func SetParameter(c *gin.Context) {
 }
 
 func startGet() {
-	if env.Port == "8000" {
-		env.URL = "http://localhost:" + env.ResPort + "/trace1.data"
-	}
-	if env.Port == "8001" {
-		env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
-	}
+	// if env.Port == "8000" {
+	// 	env.URL = "http://localhost:" + env.ResPort + "/trace1.data"
+	// }
+	// if env.Port == "8001" {
+	// 	env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
+	// }
 
-	go byteStreamHandle()
 	go streamHandle()
 
 	start = time.Now()
 	getRes(env.URL)
+	// fmt.Println("请求用时", time.Now().Sub(start))
 }
 
 func streamHandle() {
-	size := env.StreamSize - 1000
+	size := env.StreamSize - 10000
 	for {
 		select {
 		case <-endCh:
+			fmt.Println("好难", len(model.ErrTid))
 			for {
 				span := <-model.Stream
 				model.Mux.Lock()
@@ -118,73 +123,57 @@ func getRes(url string) {
 }
 
 func readData(resp *http.Response) {
+	var res []byte
 	for {
 		n, err := resp.Body.Read(buffer)
 		if n == 0 || err != nil {
 			endCh <- true
-			end = time.Now()
-			fmt.Println("读取结束", end.Sub(start), n, err)
+			fmt.Println("读取结束", time.Now().Sub(start), n, err)
 			//resp.Body.Close()
 			return
 		}
-		model.ByteStream <- buffer[:n]
-		// fmt.Println(b2s(buffer[:n]))
-	}
-}
-
-func byteStreamHandle() {
-	var (
-		res []byte
-	)
-	for {
-		bs = <-model.ByteStream
-		res = append(res, bs...)
-		if len(res) > 100000000 {
-			list = bytes.Split(res, sep)
-			filter(list)
+		res = append(res, buffer[:n]...)
+		if len(res) > 50000000 {
+			go filter(res)
 			res = nil
 		}
 	}
+	// if body, err := ioutil.ReadAll(resp.Body); err != nil {
+	// 	log.Println(err)
+	// } else {
+	// 	go filter(body)
+	// }
 }
 
 var count int
 
-func filter(list [][]byte) {
+func filter(bs []byte) {
 	st := time.Now()
 	var res = false
+	list = strings.Split(b2s(bs), sep)
 	for _, v := range list {
-		i := bytes.Index(v, sep2)
-		if i == -1 {
+		arr := strings.Split(v, sep2)
+		if len(arr) < 9 {
 			count++
-			// if k > 0 {
-			// 	fmt.Print(b2s(list[k-1]))
-			// 	fmt.Println("   ",b2s(list[k]))
-			// }
-			// fmt.Println(list[k-1])
 			continue
 		}
-		fspan.Tid = b2s(v[:i])
-		fspan.Data = b2s(v)
-		model.Stream <- fspan
-		res = bytes.Contains(v, sep3)
+		fspan.Tid = arr[0]
+		fspan.Data = v
+		res = strings.Contains(arr[8], sep3)
 		if res {
 			ws.WriteTid(s2b(fspan.Tid))
-			model.Mux.Lock()
-			model.ErrTid[fspan.Tid] = ""
-			model.Mux.Unlock()
+			model.Stream <- fspan
 			continue
 		}
-		res = bytes.Contains(v, sep4)
+		res = strings.Contains(arr[8], sep4)
 		if res {
-			res = bytes.Contains(v, sep5)
+			res = strings.Contains(arr[8], sep5)
 			if !res {
 				ws.WriteTid(s2b(fspan.Tid))
-				model.Mux.Lock()
-				model.ErrTid[fspan.Tid] = ""
-				model.Mux.Unlock()
 			}
 		}
+		model.Stream <- fspan
 	}
-	fmt.Println(time.Now().Sub(st))
-	fmt.Println(count)
+	fmt.Println("计算用时", time.Now().Sub(st))
+	fmt.Println("count=", count)
 }

@@ -127,9 +127,6 @@ func (conn *Connection) readLoop() {
 				fmt.Println(d)
 				continue
 			}
-			if arr[0] == "" {
-				fmt.Println(d)
-			}
 			span.Tid = arr[0]
 			span.Time = arr[1]
 			span.Data = d + "\n"
@@ -181,7 +178,7 @@ func handle() {
 	}
 	end := time.Now()
 	log.Println("计算用时：", end.Sub(start))
-	fmt.Println(model.Result)
+	fmt.Println(len(model.Result))
 	fmt.Println(len(model.ErrTid))
 	utils.HTTPPost()
 }

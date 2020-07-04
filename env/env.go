@@ -17,12 +17,12 @@ var (
 
 func init() {
 	Client = &http.Client{
-		Timeout: time.Second * 120,
+		Timeout: time.Second * 100,
 	}
 	if os.Getenv("SERVER_PORT") == "" {
-		BufferSize = 1000
+		BufferSize = 10000
 	} else {
-		BufferSize = 1000000
+		BufferSize = 10000000
 	}
-	StreamSize = 500100
+	StreamSize = 5001000
 }

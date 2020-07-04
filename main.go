@@ -23,8 +23,7 @@ func initData() {
 		runtime.GOMAXPROCS(2)
 	}
 	if env.Port == "" {
-		// runtime.GOMAXPROCS(4)
-		env.URL = "http://192.168.0.4/trace1.data"
+		env.URL = "http://192.168.0.4/trace2.data"
 		//env.URL = "http://www.yinghuo2018.com/download/trace1.data"
 		env.Port = "8000"
 	}
