@@ -182,7 +182,9 @@ func handle() {
 	// 排序
 	for k, s := range model.SpanMap {
 		sort.Sort(s)
+		model.Mux.Lock()
 		model.SpanMap[k] = s
+		model.Mux.Unlock()
 	}
 	// 聚合
 	for k, s := range model.SpanMap {
@@ -191,7 +193,6 @@ func handle() {
 			buffer.WriteString(item.Data)
 		}
 		// md5加密
-		fmt.Println(buffer.String())
 		model.Result[k] = utils.Md5(buffer.String())
 	}
 	end := time.Now()
