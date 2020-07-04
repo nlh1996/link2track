@@ -5,6 +5,7 @@ import (
 	"cloud/model"
 	"crypto/md5"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -17,7 +18,7 @@ import (
 func Md5(data string) string {
 	h := md5.New()
 	h.Write(Str2bytes(data))
-	return Bytes2str(h.Sum(nil))
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
 // HTTPPost .

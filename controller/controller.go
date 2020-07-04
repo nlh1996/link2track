@@ -56,12 +56,12 @@ func SetParameter(c *gin.Context) {
 }
 
 func startGet() {
-	// if env.Port == "8000" {
-	// 	env.URL = "http://localhost:" + env.ResPort + "/trace1.data"
-	// }
-	// if env.Port == "8001" {
-	// 	env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
-	// }
+	if env.Port == "8000" {
+		env.URL = "http://localhost:" + env.ResPort + "/trace1.data"
+	}
+	if env.Port == "8001" {
+		env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
+	}
 
 	//go streamHandle()
 	start = time.Now()
