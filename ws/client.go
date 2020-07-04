@@ -2,6 +2,8 @@ package ws
 
 import (
 	"cloud/env"
+	"cloud/model"
+	"cloud/utils"
 	"log"
 
 	"golang.org/x/net/websocket"
@@ -48,13 +50,13 @@ func WriteSpan(data []byte) {
 func read() {
 	var data = make([]byte, 512)
 	for {
-		_, err := ws1.Read(data)
+		m, err := ws1.Read(data)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		// model.Mux.Lock()
-		// model.ErrTid[utils.Bytes2str(data[:m])] = ""
-		// model.Mux.Unlock()
+		model.Mux.Lock()
+		model.ErrTid[utils.Bytes2str(data[:m])] = ""
+		model.Mux.Unlock()
 	}
 }

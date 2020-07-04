@@ -16,8 +16,6 @@ import (
 
 var (
 	buffer []byte
-	list   []string
-	fspan  model.Span
 	index  int
 	start  time.Time
 	sep    = "\n"
@@ -33,12 +31,11 @@ var (
 	b2s   = utils.Bytes2str
 	s2b   = utils.Str2bytes
 	endCh chan bool
-	res   []byte
 )
 
 func init() {
 	endCh = make(chan bool)
-	buffer = make([]byte, env.BufferSize)
+	// buffer = make([]byte, env.BufferSize)
 }
 
 // Ready .
@@ -66,11 +63,36 @@ func startGet() {
 	// 	env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
 	// }
 
-	go streamHandle()
+	//go streamHandle()
 
 	start = time.Now()
-	getRes(env.URL)
-	// fmt.Println("请求用时", time.Now().Sub(start))
+	getTid()
+	fmt.Println("第一次请求时间", time.Now().Sub(start))
+
+	start = time.Now()
+	getRes()
+	fmt.Println("第二次请求时间", time.Now().Sub(start))
+}
+
+func getTid() {
+	req, err := http.NewRequest("GET", env.URL, nil)
+	if err != nil {
+		log.Fatalf("Invalid url for downloading")
+	}
+	req.Header.Set("Accept-Charset", "utf-8")
+	// var r string
+	// if i == 9 {
+	// 	r = fmt.Sprintf("%v-", 40000000*i)
+	// } else {
+	// 	r = fmt.Sprintf("%v-%v", 40000000*i, 40000000*(i+1))
+	// }
+	// req.Header.Set("Range", "bytes="+r)
+	resp, err := env.Client.Do(req)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	readData(resp)
 }
 
 func streamHandle() {
@@ -106,33 +128,34 @@ func streamHandle() {
 }
 
 // getRes .
-func getRes(url string) {
-	req, err := http.NewRequest("GET", url, nil)
+func getRes() {
+	req, err := http.NewRequest("GET", env.URL, nil)
 	if err != nil {
-		log.Fatalf("Invalid url for downloading: %s, error: %v", url, err)
+		log.Fatalf("Invalid url for downloading: %s, error: %v", env.URL, err)
 	}
 	req.Header.Set("Accept-Charset", "utf-8")
-	req.Header.Set("Accept-Encoding", "gzip")
 	resp, err := env.Client.Do(req)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	readData(resp)
+	readData2(resp)
 }
 
 func readData(resp *http.Response) {
+	buffer := make([]byte, env.BufferSize)
+	var res []byte
 	for {
 		n, err := resp.Body.Read(buffer)
+		res = append(res, buffer[:n]...)
 		if n == 0 || err != nil {
 			go filter(res)
-			endCh <- true
-			fmt.Println("读取结束", time.Now().Sub(start), n, err)
+			//endCh <- true
+			fmt.Println("读取结束", n, err)
 			//resp.Body.Close()
 			return
 		}
-		res = append(res, buffer[:n]...)
-		if len(res) > 5000000 {
+		if len(res) > 50000000 {
 			go filter(res)
 			res = nil
 		}
@@ -144,41 +167,72 @@ func readData(resp *http.Response) {
 	// }
 }
 
-var count int
+func readData2(resp *http.Response) {
+	buffer := make([]byte, env.BufferSize)
+	var res []byte
+	for {
+		n, err := resp.Body.Read(buffer)
+		res = append(res, buffer[:n]...)
+		if n == 0 || err != nil {
+			go filter(res)
+			//endCh <- true
+			fmt.Println("读取结束", n, err)
+			//resp.Body.Close()
+			return
+		}
+		if len(res) > 50000000 {
+			go filter2(res)
+			res = nil
+		}
+	}
+	// if body, err := ioutil.ReadAll(resp.Body); err != nil {
+	// 	log.Println(err)
+	// } else {
+	// 	go filter(body)
+	// }
+}
 
 func filter(bs []byte) {
 	st := time.Now()
 	var res = false
-	list = strings.Split(b2s(bs), sep)
+	list := strings.Split(b2s(bs), sep)
 	for _, v := range list {
 		arr := strings.Split(v, sep2)
-		if len(arr) < 9 || len(arr[0]) < 12{
-			count++
+		if len(arr) < 9 || len(arr[0]) < 12 {
 			continue
 		}
-		fspan.Tid = arr[0]
-		fspan.Data = v
+		// fspan.Tid = arr[0]
+		// fspan.Data = v
 		res = strings.Contains(arr[8], sep3)
 		if res {
-			ws.WriteTid(s2b(fspan.Tid))
-			model.Mux.Lock()
-			model.ErrTid[fspan.Tid] = ""
-			model.Mux.Unlock()
-			model.Stream <- fspan
+			ws.WriteTid(s2b(arr[0]))
+			//model.Stream <- fspan
 			continue
 		}
 		res = strings.Contains(arr[8], sep4)
 		if res {
 			res = strings.Contains(arr[8], sep5)
 			if !res {
-				ws.WriteTid(s2b(fspan.Tid))
-				model.Mux.Lock()
-				model.ErrTid[fspan.Tid] = ""
-				model.Mux.Unlock()
+				ws.WriteTid(s2b(arr[0]))
 			}
 		}
-		model.Stream <- fspan
+		//model.Stream <- fspan
 	}
 	fmt.Println("计算用时", time.Now().Sub(st))
-	fmt.Println("count=", count)
+}
+
+func filter2(bs []byte) {
+	st := time.Now()
+	list := strings.Split(b2s(bs), sep)
+	for _, v := range list {
+		arr := strings.Split(v, sep2)
+		if len(arr) < 9 || len(arr[0]) < 12 {
+			continue
+		}
+		_, ok := model.ErrTid[arr[0]]
+		if ok {
+			ws.WriteSpan(s2b(arr[0]))
+		}
+	}
+	fmt.Println("计算用时", time.Now().Sub(st))
 }

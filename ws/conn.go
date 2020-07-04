@@ -107,7 +107,7 @@ func (conn *Connection) readLoop() {
 		if d == "end" {
 			ch <- 0
 		}
-		if conn.ID != "2" {
+		if conn.ID != "2" && d != "" {
 			model.Mux.Lock()
 			_, ok := model.ErrTid[d]
 			model.Mux.Unlock()
@@ -119,7 +119,7 @@ func (conn *Connection) readLoop() {
 			}
 		} else {
 			arr = strings.Split(d, "|")
-			if len(arr) < 9 || arr[0] == ""{
+			if len(arr) < 9 || arr[0] == "" {
 				fmt.Println(d)
 				continue
 			}
