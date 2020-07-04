@@ -4,6 +4,7 @@ import (
 	"cloud/env"
 	"cloud/model"
 	"log"
+	"time"
 
 	"golang.org/x/net/websocket"
 )
@@ -20,12 +21,26 @@ func Dial() {
 	url2 := "ws://localhost:8002/?id=2"
 	origin := "http://localhost:8002/"
 	log.Println("客户端等待服务器连接中...")
-	for ws1 == nil {
-		ws1, _ = websocket.Dial(url1, "", origin)
+	for i := 0; i < 60; i++ {
+		time.Sleep(1 * time.Second)
+		ws1, err = websocket.Dial(url1, "", origin)
+		if ws1 != nil && err == nil {
+			break
+		}
 	}
-	for ws2 == nil {
-		ws2, _ = websocket.Dial(url2, "", origin)
+	for i := 0; i < 60; i++ {
+		time.Sleep(1 * time.Second)
+		ws2, err = websocket.Dial(url2, "", origin)
+		if ws2 != nil && err == nil {
+			break
+		}
 	}
+	// for ws1 == nil {
+	// 	ws1, _ = websocket.Dial(url1, "", origin)
+	// }
+	// for ws2 == nil {
+	// 	ws2, _ = websocket.Dial(url2, "", origin)
+	// }
 	log.Println("成功连接...")
 	go read()
 }
@@ -56,6 +71,8 @@ func read() {
 		}
 		// fmt.Print(" ", utils.Bytes2str(data[:m]))
 		key := string(data[:m])
+		model.Mux.Lock()
 		model.ErrTid[key] = ""
+		model.Mux.Unlock()
 	}
 }

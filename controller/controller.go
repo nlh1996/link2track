@@ -159,7 +159,6 @@ func readData2(resp *http.Response) {
 }
 
 func filter(bs []byte) {
-	st := time.Now()
 	var res = false
 	list := strings.Split(b2s(bs), sep)
 	for _, v := range list {
@@ -180,11 +179,9 @@ func filter(bs []byte) {
 			}
 		}
 	}
-	fmt.Println("计算用时", time.Now().Sub(st))
 }
 
 func filter2(bs []byte, i int) {
-	st := time.Now()
 	list := strings.Split(b2s(bs), sep)
 	for _, v := range list {
 		arr := strings.Split(v, sep2)
@@ -201,5 +198,4 @@ func filter2(bs []byte, i int) {
 	if i == 1 {
 		ws.WriteSpan(s2b("end"))
 	}
-	fmt.Println("计算用时", time.Now().Sub(st))
 }
