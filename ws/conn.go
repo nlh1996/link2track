@@ -4,6 +4,7 @@ import (
 	"cloud/model"
 	"cloud/utils"
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -47,8 +48,49 @@ func (conn *Connection) Start() {
 	// 启动读协程
 	go conn.readLoop()
 	// 启动写协程
-	// go conn.writeLoop()
+	go conn.writeLoop()
+
+	var span model.Span
+	
+	for {
+		select {
+		case data := <-conn.inChan:
+			d := utils.Bytes2str(data)
+			if d == "end" {
+				ch <- 0
+			}
+			if conn.ID != "2" && d != "" {
+				model.Mux.Lock()
+				_, ok := model.ErrTid[d]
+				model.Mux.Unlock()
+				if !ok {
+					model.Mux.Lock()
+					model.ErrTid[d] = ""
+					model.Mux.Unlock()
+					for _, c := range GetConnPool().Pool {
+						c.Send(utils.Str2bytes(d))
+					}
+				}
+			} else {
+				arr := strings.Split(d, "|")
+				if len(arr) < 9 || arr[0] == "" {
+					fmt.Println(d)
+					continue
+				}
+				span.Tid = arr[0]
+				span.Time = arr[1]
+				span.Data = d + "\n"
+				model.Mux.Lock()
+				model.SpanMap[span.Tid] = append(model.SpanMap[span.Tid], span)
+				model.Mux.Unlock()
+			}
+
+		case <-conn.ctx.Done():
+			return
+		}
+	}
 }
+
 
 // Close .
 func (conn *Connection) Close() {
@@ -63,10 +105,12 @@ func (conn *Connection) Close() {
 
 // Send .
 func (conn *Connection) Send(msgBytes []byte) (err error) {
-	err = conn.wsConnect.WriteMessage(websocket.TextMessage, msgBytes)
-	if err != nil {
-		log.Println(err)
+	select {
+	case conn.outChan <- msgBytes:
+	case <-conn.ctx.Done():
+		err = errors.New("connection is closed")
 	}
+
 	return
 }
 
@@ -96,41 +140,16 @@ func (conn *Connection) readLoop() {
 	var (
 		data []byte
 		err  error
-		arr  []string
-		span model.Span
 	)
 	for {
 		if _, data, err = conn.wsConnect.ReadMessage(); err != nil {
 			goto ERR
 		}
-		d := utils.Bytes2str(data)
-		if d == "end" {
-			ch <- 0
-		}
-		if conn.ID != "2" && d != "" {
-			model.Mux.Lock()
-			_, ok := model.ErrTid[d]
-			model.Mux.Unlock()
-			if !ok {
-				model.Mux.Lock()
-				model.ErrTid[d] = ""
-				model.Mux.Unlock()
-				for _,c := range GetConnPool().Pool {
-					c.Send(utils.Str2bytes(d))
-				}
-			}
-		} else {
-			arr = strings.Split(d, "|")
-			if len(arr) < 9 || arr[0] == "" {
-				fmt.Println(d)
-				continue
-			}
-			span.Tid = arr[0]
-			span.Time = arr[1]
-			span.Data = d + "\n"
-			model.Mux.Lock()
-			model.SpanMap[span.Tid] = append(model.SpanMap[span.Tid], span)
-			model.Mux.Unlock()
+		//阻塞在这里，等待inChan有空闲位置
+		select {
+		case conn.inChan <- data:
+		case <-conn.ctx.Done(): // closeChan 感知 conn断开
+			goto ERR
 		}
 	}
 
