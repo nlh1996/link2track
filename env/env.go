@@ -19,8 +19,9 @@ func init() {
 	Client = &http.Client{
 		Timeout: time.Second * 100,
 	}
+
 	if os.Getenv("SERVER_PORT") == "" {
-		BufferSize = 10000
+		BufferSize = 1000
 	} else {
 		BufferSize = 10000000
 	}

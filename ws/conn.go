@@ -115,7 +115,9 @@ func (conn *Connection) readLoop() {
 				model.Mux.Lock()
 				model.ErrTid[d] = ""
 				model.Mux.Unlock()
-				conn.Send(data)
+				for _,c := range GetConnPool().Pool {
+					c.Send(utils.Str2bytes(d))
+				}
 			}
 		} else {
 			arr = strings.Split(d, "|")

@@ -56,12 +56,12 @@ func SetParameter(c *gin.Context) {
 }
 
 func startGet() {
-	// if env.Port == "8000" {
-	// 	env.URL = "http://localhost:" + env.ResPort + "/trace1.data"
-	// }
-	// if env.Port == "8001" {
-	// 	env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
-	// }
+	if env.Port == "8000" {
+		env.URL = "http://localhost:" + env.ResPort + "/trace1.data"
+	}
+	if env.Port == "8001" {
+		env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
+	}
 
 	//go streamHandle()
 
@@ -95,38 +95,6 @@ func getTid() {
 	readData(resp)
 }
 
-func streamHandle() {
-	size := env.StreamSize - 10000
-	for {
-		select {
-		case <-endCh:
-			for {
-				span := <-model.Stream
-				model.Mux.Lock()
-				_, ok := model.ErrTid[span.Tid]
-				model.Mux.Unlock()
-				if ok {
-					ws.WriteSpan(s2b(span.Data))
-				}
-				if len(model.Stream) == 0 {
-					ws.WriteSpan([]byte("end"))
-					return
-				}
-			}
-		default:
-			if len(model.Stream) > size {
-				span := <-model.Stream
-				model.Mux.Lock()
-				_, ok := model.ErrTid[span.Tid]
-				model.Mux.Unlock()
-				if ok {
-					ws.WriteSpan(s2b(span.Data))
-				}
-			}
-		}
-	}
-}
-
 // getRes .
 func getRes() {
 	req, err := http.NewRequest("GET", env.URL, nil)
@@ -150,9 +118,8 @@ func readData(resp *http.Response) {
 		res = append(res, buffer[:n]...)
 		if n == 0 || err != nil {
 			go filter(res)
-			//endCh <- true
 			fmt.Println("读取结束", n, err)
-			//resp.Body.Close()
+			resp.Body.Close()
 			return
 		}
 		if len(res) > 50000000 {
@@ -174,14 +141,13 @@ func readData2(resp *http.Response) {
 		n, err := resp.Body.Read(buffer)
 		res = append(res, buffer[:n]...)
 		if n == 0 || err != nil {
-			go filter(res)
-			//endCh <- true
+			go filter2(res, 1)
 			fmt.Println("读取结束", n, err)
 			//resp.Body.Close()
 			return
 		}
 		if len(res) > 50000000 {
-			go filter2(res)
+			go filter2(res, 0)
 			res = nil
 		}
 	}
@@ -201,12 +167,9 @@ func filter(bs []byte) {
 		if len(arr) < 9 || len(arr[0]) < 12 {
 			continue
 		}
-		// fspan.Tid = arr[0]
-		// fspan.Data = v
 		res = strings.Contains(arr[8], sep3)
 		if res {
 			ws.WriteTid(s2b(arr[0]))
-			//model.Stream <- fspan
 			continue
 		}
 		res = strings.Contains(arr[8], sep4)
@@ -216,12 +179,11 @@ func filter(bs []byte) {
 				ws.WriteTid(s2b(arr[0]))
 			}
 		}
-		//model.Stream <- fspan
 	}
 	fmt.Println("计算用时", time.Now().Sub(st))
 }
 
-func filter2(bs []byte) {
+func filter2(bs []byte, i int) {
 	st := time.Now()
 	list := strings.Split(b2s(bs), sep)
 	for _, v := range list {
@@ -229,10 +191,15 @@ func filter2(bs []byte) {
 		if len(arr) < 9 || len(arr[0]) < 12 {
 			continue
 		}
+		model.Mux.Lock()
 		_, ok := model.ErrTid[arr[0]]
+		model.Mux.Unlock()
 		if ok {
-			ws.WriteSpan(s2b(arr[0]))
+			ws.WriteSpan(s2b(v))
 		}
+	}
+	if i == 1 {
+		ws.WriteSpan(s2b("end"))
 	}
 	fmt.Println("计算用时", time.Now().Sub(st))
 }
