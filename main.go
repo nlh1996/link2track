@@ -32,12 +32,13 @@ func initData() {
 func main() {
 	// 数据初始化
 	initData()
-	model.Init()
 
 	if env.Port == "8002" {
+		model.SInit()
 		router.Init()
 	}
 
+	model.CInit()
 	//连接websocket服务
 	ws.Dial()
 	// 开启http服务

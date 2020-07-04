@@ -8,7 +8,7 @@ import (
 
 
 func main() {
-	model.Init()
+	model.SInit()
 	env.Port = "8002"
 	router.Init()
 }

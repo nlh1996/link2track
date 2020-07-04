@@ -17,7 +17,6 @@ import (
 var (
 	buffer []byte
 	list   []string
-	bs     []byte
 	fspan  model.Span
 	index  int
 	start  time.Time
@@ -34,6 +33,7 @@ var (
 	b2s   = utils.Bytes2str
 	s2b   = utils.Str2bytes
 	endCh chan bool
+	res   []byte
 )
 
 func init() {
@@ -59,12 +59,12 @@ func SetParameter(c *gin.Context) {
 }
 
 func startGet() {
-	if env.Port == "8000" {
-		env.URL = "http://localhost:" + env.ResPort + "/trace1.data"
-	}
-	if env.Port == "8001" {
-		env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
-	}
+	// if env.Port == "8000" {
+	// 	env.URL = "http://localhost:" + env.ResPort + "/trace1.data"
+	// }
+	// if env.Port == "8001" {
+	// 	env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
+	// }
 
 	go streamHandle()
 
@@ -78,7 +78,6 @@ func streamHandle() {
 	for {
 		select {
 		case <-endCh:
-			fmt.Println("好难", len(model.ErrTid))
 			for {
 				span := <-model.Stream
 				model.Mux.Lock()
@@ -123,7 +122,6 @@ func getRes(url string) {
 }
 
 func readData(resp *http.Response) {
-	var res []byte
 	for {
 		n, err := resp.Body.Read(buffer)
 		if n == 0 || err != nil {
@@ -134,7 +132,7 @@ func readData(resp *http.Response) {
 			return
 		}
 		res = append(res, buffer[:n]...)
-		if len(res) > 100000000 {
+		if len(res) > 5000000 {
 			go filter(res)
 			res = nil
 		}
@@ -154,7 +152,7 @@ func filter(bs []byte) {
 	list = strings.Split(b2s(bs), sep)
 	for _, v := range list {
 		arr := strings.Split(v, sep2)
-		if len(arr) < 9 {
+		if len(arr) < 9 || len(arr[0]) < 12{
 			count++
 			continue
 		}

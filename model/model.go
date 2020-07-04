@@ -32,12 +32,17 @@ var Result map[string]string
 // EndSign 下载结束信号
 var EndSign int
 
-// Init .
-func Init() {
+// SInit .
+func SInit() {
 	Result = make(map[string]string, 10000)
 	ErrTid = make(map[string]string, 10000)
-	Stream = make(chan Span, env.StreamSize)
 	SpanMap = make(map[string]Spans, 10000)
+}
+
+// CInit .
+func CInit() {
+	ErrTid = make(map[string]string, 10000)
+	Stream = make(chan Span, env.StreamSize)
 }
 
 // Spans .
