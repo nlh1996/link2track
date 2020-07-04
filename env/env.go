@@ -24,5 +24,5 @@ func init() {
 	} else {
 		BufferSize = 10000000
 	}
-	StreamSize = 5001000
+	StreamSize = 5010000
 }

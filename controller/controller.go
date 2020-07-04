@@ -59,12 +59,12 @@ func SetParameter(c *gin.Context) {
 }
 
 func startGet() {
-	// if env.Port == "8000" {
-	// 	env.URL = "http://localhost:" + env.ResPort + "/trace1.data"
-	// }
-	// if env.Port == "8001" {
-	// 	env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
-	// }
+	if env.Port == "8000" {
+		env.URL = "http://localhost:" + env.ResPort + "/trace1.data"
+	}
+	if env.Port == "8001" {
+		env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
+	}
 
 	go streamHandle()
 
@@ -127,13 +127,14 @@ func readData(resp *http.Response) {
 	for {
 		n, err := resp.Body.Read(buffer)
 		if n == 0 || err != nil {
+			go filter(res)
 			endCh <- true
 			fmt.Println("读取结束", time.Now().Sub(start), n, err)
 			//resp.Body.Close()
 			return
 		}
 		res = append(res, buffer[:n]...)
-		if len(res) > 50000000 {
+		if len(res) > 100000000 {
 			go filter(res)
 			res = nil
 		}
@@ -162,6 +163,9 @@ func filter(bs []byte) {
 		res = strings.Contains(arr[8], sep3)
 		if res {
 			ws.WriteTid(s2b(fspan.Tid))
+			model.Mux.Lock()
+			model.ErrTid[fspan.Tid] = ""
+			model.Mux.Unlock()
 			model.Stream <- fspan
 			continue
 		}
@@ -170,6 +174,9 @@ func filter(bs []byte) {
 			res = strings.Contains(arr[8], sep5)
 			if !res {
 				ws.WriteTid(s2b(fspan.Tid))
+				model.Mux.Lock()
+				model.ErrTid[fspan.Tid] = ""
+				model.Mux.Unlock()
 			}
 		}
 		model.Stream <- fspan

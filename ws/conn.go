@@ -4,7 +4,6 @@ import (
 	"cloud/model"
 	"cloud/utils"
 	"context"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -48,7 +47,7 @@ func (conn *Connection) Start() {
 	// 启动读协程
 	go conn.readLoop()
 	// 启动写协程
-	go conn.writeLoop()
+	// go conn.writeLoop()
 }
 
 // Close .
@@ -64,10 +63,9 @@ func (conn *Connection) Close() {
 
 // Send .
 func (conn *Connection) Send(msgBytes []byte) (err error) {
-	select {
-	case conn.outChan <- msgBytes:
-	case <-conn.ctx.Done():
-		err = errors.New("connection is closed")
+	err = conn.wsConnect.WriteMessage(websocket.TextMessage, msgBytes)
+	if err != nil {
+		log.Println(err)
 	}
 	return
 }
@@ -117,13 +115,11 @@ func (conn *Connection) readLoop() {
 				model.Mux.Lock()
 				model.ErrTid[d] = ""
 				model.Mux.Unlock()
-				for _, c := range GetConnPool().Pool {
-					c.Send(data)
-				}
+				conn.Send(data)
 			}
 		} else {
 			arr = strings.Split(d, "|")
-			if len(arr) < 2 {
+			if len(arr) < 9 || arr[0] == ""{
 				fmt.Println(d)
 				continue
 			}
