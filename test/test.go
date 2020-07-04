@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"cloud/env"
 	"fmt"
 	"io/ioutil"
@@ -14,8 +15,14 @@ func main() {
 	// bs := []byte("hello|wor|ld")
 	// i := bytes.Index(bs, []byte("|"))
 	// fmt.Println(string(bs[:i]))
-	r := fmt.Sprintf("%v-%v", 100000000*(1-1), 100000000*1)
-	fmt.Println(r)
+	// r := fmt.Sprintf("%v-%v", 100000000*(1-1), 100000000*1)
+	// fmt.Println(r)
+	// var buffer bytes.Buffer
+	// buffer.WriteString("你好")
+	// buffer.WriteString("hi")
+	// fmt.Println(buffer.String())
+	// buffer.WriteString(" ccc")
+	// fmt.Println(buffer.String())
 }
 
 // func getRes(url string, i int, size int) string {

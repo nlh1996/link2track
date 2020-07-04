@@ -64,7 +64,6 @@ func startGet() {
 	// }
 
 	//go streamHandle()
-
 	start = time.Now()
 	getTid()
 	fmt.Println("第一次请求时间", time.Now().Sub(start))
@@ -159,6 +158,7 @@ func readData2(resp *http.Response) {
 }
 
 func filter(bs []byte) {
+	st := time.Now()
 	var res = false
 	list := strings.Split(b2s(bs), sep)
 	for _, v := range list {
@@ -179,6 +179,7 @@ func filter(bs []byte) {
 			}
 		}
 	}
+	fmt.Println("计算用时", time.Now().Sub(st))
 }
 
 func filter2(bs []byte, i int) {

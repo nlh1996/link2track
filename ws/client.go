@@ -35,12 +35,7 @@ func Dial() {
 			break
 		}
 	}
-	// for ws1 == nil {
-	// 	ws1, _ = websocket.Dial(url1, "", origin)
-	// }
-	// for ws2 == nil {
-	// 	ws2, _ = websocket.Dial(url2, "", origin)
-	// }
+
 	log.Println("成功连接...")
 	go read()
 }

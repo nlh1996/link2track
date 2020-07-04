@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"bytes"
 	"cloud/model"
 	"cloud/utils"
 	"context"
@@ -90,7 +91,6 @@ func (conn *Connection) Start() {
 		}
 	}
 }
-
 
 // Close .
 func (conn *Connection) Close() {
@@ -186,16 +186,17 @@ func handle() {
 	}
 	// 聚合
 	for k, s := range model.SpanMap {
-		var str string
+		var buffer bytes.Buffer
 		for _, item := range s {
-			str = str + item.Data
+			buffer.WriteString(item.Data)
 		}
 		// md5加密
-		model.Result[k] = utils.Md5(str)
+		fmt.Println(buffer.String())
+		model.Result[k] = utils.Md5(buffer.String())
 	}
 	end := time.Now()
 	log.Println("计算用时：", end.Sub(start))
+	utils.HTTPPost()
 	fmt.Println(len(model.Result))
 	fmt.Println(len(model.ErrTid))
-	utils.HTTPPost()
 }

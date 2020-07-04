@@ -25,7 +25,7 @@ func Md5(data string) string {
 func HTTPPost() {
 	DataURLVal := url.Values{}
 	mjson, _ := json.Marshal(model.Result)
-	mString := string(mjson)
+	mString := Bytes2str(mjson)
 	DataURLVal.Add("result", mString)
 	resp, err := http.Post(env.URL,
 		"application/x-www-form-urlencoded",
