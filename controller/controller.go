@@ -15,7 +15,6 @@ import (
 )
 
 var (
-	buffer []byte
 	index  int
 	start  time.Time
 	sep    = "\n"
@@ -30,12 +29,7 @@ var (
 	// sep5   = []byte("code=200")
 	b2s   = utils.Bytes2str
 	s2b   = utils.Str2bytes
-	endCh chan bool
 )
-
-func init() {
-	endCh = make(chan bool)
-}
 
 // Ready .
 func Ready(c *gin.Context) {
@@ -63,6 +57,7 @@ func startGet() {
 	}
 
 	//go streamHandle()
+
 	start = time.Now()
 	getTid()
 	fmt.Println("第一次请求时间", time.Now().Sub(start))
@@ -75,16 +70,11 @@ func startGet() {
 func getTid() {
 	req, err := http.NewRequest("GET", env.URL, nil)
 	if err != nil {
+		ws.WriteSpan(s2b("end"))
 		log.Fatalf("Invalid url for downloading")
 	}
 	req.Header.Set("Accept-Charset", "utf-8")
-	// var r string
-	// if i == 9 {
-	// 	r = fmt.Sprintf("%v-", 40000000*i)
-	// } else {
-	// 	r = fmt.Sprintf("%v-%v", 40000000*i, 40000000*(i+1))
-	// }
-	// req.Header.Set("Range", "bytes="+r)
+
 	resp, err := env.Client.Do(req)
 	if err != nil {
 		log.Println(err)
@@ -97,6 +87,7 @@ func getTid() {
 func getRes() {
 	req, err := http.NewRequest("GET", env.URL, nil)
 	if err != nil {
+		ws.WriteSpan(s2b("end"))
 		log.Fatalf("Invalid url for downloading: %s, error: %v", env.URL, err)
 	}
 	req.Header.Set("Accept-Charset", "utf-8")
@@ -125,11 +116,6 @@ func readData(resp *http.Response) {
 			res = nil
 		}
 	}
-	// if body, err := ioutil.ReadAll(resp.Body); err != nil {
-	// 	log.Println(err)
-	// } else {
-	// 	go filter(body)
-	// }
 }
 
 func readData2(resp *http.Response) {
@@ -149,11 +135,6 @@ func readData2(resp *http.Response) {
 			res = nil
 		}
 	}
-	// if body, err := ioutil.ReadAll(resp.Body); err != nil {
-	// 	log.Println(err)
-	// } else {
-	// 	go filter(body)
-	// }
 }
 
 func filter(bs []byte) {
