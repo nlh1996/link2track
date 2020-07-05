@@ -64,7 +64,7 @@ func read() {
 			log.Println(err)
 			return
 		}
-		// fmt.Print(" ", utils.Bytes2str(data[:m]))
+
 		key := string(data[:m])
 		model.Mux.Lock()
 		model.ErrTid[key] = ""
