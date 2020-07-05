@@ -35,7 +35,6 @@ var (
 
 func init() {
 	endCh = make(chan bool)
-	// buffer = make([]byte, env.BufferSize)
 }
 
 // Ready .
@@ -56,12 +55,12 @@ func SetParameter(c *gin.Context) {
 }
 
 func startGet() {
-	// if env.Port == "8000" {
-	// 	env.URL = "http://localhost:" + env.ResPort + "/trace1.data"
-	// }
-	// if env.Port == "8001" {
-	// 	env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
-	// }
+	if env.Port == "8000" {
+		env.URL = "http://localhost:" + env.ResPort + "/trace1.data"
+	}
+	if env.Port == "8001" {
+		env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
+	}
 
 	//go streamHandle()
 	start = time.Now()
@@ -121,7 +120,7 @@ func readData(resp *http.Response) {
 			resp.Body.Close()
 			return
 		}
-		if len(res) > 50000000 {
+		if len(res) > 60000000 {
 			go filter(res)
 			res = nil
 		}
@@ -142,10 +141,10 @@ func readData2(resp *http.Response) {
 		if n == 0 || err != nil {
 			go filter2(res, 1)
 			fmt.Println("读取结束", n, err)
-			//resp.Body.Close()
+			// resp.Body.Close()
 			return
 		}
-		if len(res) > 50000000 {
+		if len(res) > 60000000 {
 			go filter2(res, 0)
 			res = nil
 		}
@@ -164,6 +163,7 @@ func filter(bs []byte) {
 	for _, v := range list {
 		arr := strings.Split(v, sep2)
 		if len(arr) < 9 || len(arr[0]) < 12 {
+			fmt.Println(arr[0])
 			continue
 		}
 		res = strings.Contains(arr[8], sep3)
@@ -179,14 +179,16 @@ func filter(bs []byte) {
 			}
 		}
 	}
-	fmt.Println("计算用时", time.Now().Sub(st))
+	fmt.Println("1计算用时", time.Now().Sub(st))
 }
 
 func filter2(bs []byte, i int) {
+	st := time.Now()
 	list := strings.Split(b2s(bs), sep)
 	for _, v := range list {
 		arr := strings.Split(v, sep2)
 		if len(arr) < 9 || len(arr[0]) < 12 {
+			fmt.Println(arr[0])
 			continue
 		}
 		model.Mux.Lock()
@@ -199,4 +201,5 @@ func filter2(bs []byte, i int) {
 	if i == 1 {
 		ws.WriteSpan(s2b("end"))
 	}
+	fmt.Println("2计算用时", time.Now().Sub(st))
 }

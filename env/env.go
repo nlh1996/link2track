@@ -17,7 +17,7 @@ var (
 
 func init() {
 	Client = &http.Client{
-		Timeout: time.Second * 100,
+		Timeout: time.Second * 200,
 	}
 
 	if os.Getenv("SERVER_PORT") == "" {
