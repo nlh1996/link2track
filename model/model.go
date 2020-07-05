@@ -1,6 +1,7 @@
 package model
 
 import (
+	"cloud/env"
 	"sync"
 )
 
@@ -11,7 +12,7 @@ var SpanMap map[string]Spans
 var ErrTid map[string]string
 
 // Stream .
-var Stream chan Span
+var Stream chan *Span
 
 var ByteStream chan []byte
 
@@ -41,7 +42,7 @@ func SInit() {
 // CInit .
 func CInit() {
 	ErrTid = make(map[string]string, 10000)
-	//Stream = make(chan Span, env.StreamSize)
+	Stream = make(chan *Span, env.StreamSize)
 }
 
 // Spans .

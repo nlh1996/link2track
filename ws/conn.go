@@ -95,6 +95,7 @@ func (conn *Connection) Start() {
 // Close .
 func (conn *Connection) Close() {
 	if conn.connected {
+		ch <- 0
 		conn.wsConnect.Close()
 		conn.cancel()
 		conn.connected = false

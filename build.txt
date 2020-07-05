@@ -3,5 +3,4 @@ docker run -itd  --net host -e "SERVER_PORT=8000" --name "client1"
 docker run -itd  --net host -e "SERVER_PORT=8001" --name "client2" 
 docker run -itd  --net host -e "SERVER_PORT=8002" --name "backend" 
 docker run --net host -e "SERVER_PORT=8081" -v /root/html:/usr/local/nginx/share --name scoring -d 60044cb5a150
-docker stop client1 client2 bc scoring
-docker rm client1 client2 bc 
+docker cp /root/html/checkSum.data scoring:/usr/local/src/

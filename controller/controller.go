@@ -56,15 +56,15 @@ func startGet() {
 		env.URL = "http://localhost:" + env.ResPort + "/trace2.data"
 	}
 
-	//go streamHandle()
+	go streamHandle()
 
 	start = time.Now()
 	getTid()
 	fmt.Println("第一次请求时间", time.Now().Sub(start))
 
-	start = time.Now()
-	getRes()
-	fmt.Println("第二次请求时间", time.Now().Sub(start))
+	// start = time.Now()
+	// getRes()
+	// fmt.Println("第二次请求时间", time.Now().Sub(start))
 }
 
 func getTid() {
@@ -106,13 +106,13 @@ func readData(resp *http.Response) {
 		n, err := resp.Body.Read(buffer)
 		res = append(res, buffer[:n]...)
 		if n == 0 || err != nil {
-			go filter(res)
+			go filter(res, 1)
 			fmt.Println("读取结束", n, err)
 			resp.Body.Close()
 			return
 		}
 		if len(res) > 60000000 {
-			go filter(res)
+			go filter(res, 0)
 			res = nil
 		}
 	}
@@ -137,19 +137,22 @@ func readData2(resp *http.Response) {
 	}
 }
 
-func filter(bs []byte) {
+func filter(bs []byte, i int) {
 	st := time.Now()
 	var res = false
 	list := strings.Split(b2s(bs), sep)
 	for _, v := range list {
 		arr := strings.Split(v, sep2)
 		if len(arr) < 9 || len(arr[0]) < 12 {
-			fmt.Println(arr[0])
 			continue
 		}
+		span := &model.Span{}
+		span.Tid = arr[0]
+		span.Data = v
 		res = strings.Contains(arr[8], sep3)
 		if res {
 			ws.WriteTid(s2b(arr[0]))
+			model.Stream <- span
 			continue
 		}
 		res = strings.Contains(arr[8], sep4)
@@ -159,6 +162,10 @@ func filter(bs []byte) {
 				ws.WriteTid(s2b(arr[0]))
 			}
 		}
+		model.Stream <- span
+	}
+	if i == 1 {
+		model.EndSign = 1
 	}
 	fmt.Println("1计算用时", time.Now().Sub(st))
 }
@@ -183,4 +190,32 @@ func filter2(bs []byte, i int) {
 		ws.WriteSpan(s2b("end"))
 	}
 	fmt.Println("2计算用时", time.Now().Sub(st))
+}
+
+func streamHandle() {
+	size := env.StreamSize - 1000
+	for {
+		if model.EndSign == 1 {
+			for {
+				span := <-model.Stream
+				_, ok := model.ErrTid[span.Tid]
+				if ok {
+					ws.WriteSpan(s2b(span.Data))
+				}
+				if len(model.Stream) == 0 {
+					ws.WriteSpan(s2b("end"))
+					return
+				}
+			}
+		}
+		if len(model.Stream) > size {
+			span := <-model.Stream
+			model.Mux.Lock()
+			_, ok := model.ErrTid[span.Tid]
+			model.Mux.Unlock()
+			if ok {
+				ws.WriteSpan(s2b(span.Data))
+			}
+		}
+	}
 }
