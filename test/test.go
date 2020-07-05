@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"cloud/env"
 	"fmt"
 	"io/ioutil"

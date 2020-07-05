@@ -163,7 +163,7 @@ func filter(bs []byte) {
 	list := strings.Split(b2s(bs), sep)
 	for _, v := range list {
 		arr := strings.Split(v, sep2)
-		if len(arr) < 9 || len(arr[0]) < 14 {
+		if len(arr) < 9 || len(arr[0]) < 12 {
 			continue
 		}
 		res = strings.Contains(arr[8], sep3)
@@ -186,7 +186,7 @@ func filter2(bs []byte, i int) {
 	list := strings.Split(b2s(bs), sep)
 	for _, v := range list {
 		arr := strings.Split(v, sep2)
-		if len(arr) < 9 || len(arr[0]) < 14 {
+		if len(arr) < 9 || len(arr[0]) < 12 {
 			continue
 		}
 		model.Mux.Lock()

@@ -10,13 +10,18 @@ import (
 )
 
 var (
-	ws1 *websocket.Conn
-	ws2 *websocket.Conn
-	err error
+	ws1      *websocket.Conn
+	ws2      *websocket.Conn
+	err      error
+	inChan1  = make(chan []byte, 1000000)
+	outChan1 = make(chan []byte, 1000000)
+	inChan2  = make(chan []byte, 1000000)
+	outChan2 = make(chan []byte, 1000000)
 )
 
 // Dial .
 func Dial() {
+	go writeLoop()
 	url1 := "ws://localhost:8002/?id=" + env.Port
 	url2 := "ws://localhost:8002/?id=2"
 	origin := "http://localhost:8002/"
@@ -42,18 +47,12 @@ func Dial() {
 
 // WriteTid .
 func WriteTid(data []byte) {
-	_, err = ws1.Write(data)
-	if err != nil {
-		log.Println(err)
-	}
+	outChan1 <- data
 }
 
 // WriteSpan .
 func WriteSpan(data []byte) {
-	_, err = ws2.Write(data)
-	if err != nil {
-		log.Println(err)
-	}
+	outChan2 <- data
 }
 
 func read() {
@@ -69,5 +68,22 @@ func read() {
 		model.Mux.Lock()
 		model.ErrTid[key] = ""
 		model.Mux.Unlock()
+	}
+}
+
+func writeLoop() {
+	for {
+		select {
+		case data := <-outChan1:
+			_, err = ws1.Write(data)
+			if err != nil {
+				log.Println(err)
+			}
+		case data := <-outChan2:
+			_, err = ws2.Write(data)
+			if err != nil {
+				log.Println(err)
+			}
+		}
 	}
 }

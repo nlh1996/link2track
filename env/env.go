@@ -21,7 +21,7 @@ func init() {
 	}
 
 	if os.Getenv("SERVER_PORT") == "" {
-		BufferSize = 1000
+		BufferSize = 100000
 	} else {
 		BufferSize = 10000000
 	}
