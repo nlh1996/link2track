@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"log"
@@ -69,7 +70,9 @@ func (conn *Connection) Start() {
 					model.ErrTid[d] = ""
 					model.Mux.Unlock()
 					for _, c := range GetConnPool().Pool {
+						mx.Lock()
 						c.Send(utils.Str2bytes(d))
+						mx.Unlock()
 					}
 				}
 			} else {
@@ -116,8 +119,10 @@ func (conn *Connection) Send(msgBytes []byte) (err error) {
 }
 
 var ch chan int
+var mx sync.Mutex
 
 func init() {
+	mx = sync.Mutex{}
 	ch = make(chan int)
 	go do()
 }

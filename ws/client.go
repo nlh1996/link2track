@@ -22,6 +22,8 @@ var (
 // Dial .
 func Dial() {
 	go writeLoop()
+	ws1 = nil
+	ws2 = nil
 	url1 := "ws://localhost:8002/?id=" + env.Port
 	url2 := "ws://localhost:8002/?id=2"
 	origin := "http://localhost:8002/"
