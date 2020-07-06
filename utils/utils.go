@@ -34,15 +34,15 @@ func HTTPPost() {
 		log.Println(err)
 		return
 	}
-
+	if resp == nil {
+		return
+	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Println(err)
 	}
+	resp.Body.Close()
 	log.Println(string(body))
-	if resp != nil {
-		resp.Body.Close()
-	}
 }
 
 // Str2bytes .

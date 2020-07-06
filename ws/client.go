@@ -13,10 +13,10 @@ var (
 	ws1      *websocket.Conn
 	ws2      *websocket.Conn
 	err      error
-	inChan1  = make(chan []byte, 1000000)
-	outChan1 = make(chan []byte, 1000000)
-	inChan2  = make(chan []byte, 1000000)
-	outChan2 = make(chan []byte, 1000000)
+	inChan1  = make(chan []byte, 10000000)
+	outChan1 = make(chan []byte, 10000000)
+	inChan2  = make(chan []byte, 10000000)
+	outChan2 = make(chan []byte, 10000000)
 )
 
 // Dial .
@@ -56,7 +56,7 @@ func WriteSpan(data []byte) {
 }
 
 func read() {
-	var data = make([]byte, 512)
+	var data = make([]byte, 1024)
 	for {
 		m, err := ws1.Read(data)
 		if err != nil {
@@ -74,14 +74,18 @@ func writeLoop() {
 	for {
 		select {
 		case data := <-outChan1:
-			_, err = ws1.Write(data)
-			if err != nil {
-				log.Println(err)
+			if ws1 != nil {
+				_, err = ws1.Write(data)
+				if err != nil {
+					log.Println(err)
+				}
 			}
 		case data := <-outChan2:
-			_, err = ws2.Write(data)
-			if err != nil {
-				log.Println(err)
+			if ws2 == nil {
+				_, err = ws2.Write(data)
+				if err != nil {
+					log.Println(err)
+				}
 			}
 		}
 	}

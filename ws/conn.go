@@ -31,7 +31,7 @@ type Connection struct {
 func NewConnection(wsConn *websocket.Conn, id string) (*Connection, error) {
 	conn := &Connection{
 		wsConnect: wsConn,
-		inChan:    make(chan []byte, 1000000),
+		inChan:    make(chan []byte, 10000000),
 		outChan:   make(chan []byte, 1000000),
 		ID:        id,
 		connected: true,
